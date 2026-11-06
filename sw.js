@@ -1,6 +1,6 @@
 /* Message Sorter service worker: caches the app shell so it works offline.
    Bump CACHE when you change any file so installed copies pick up the update. */
-const CACHE = 'message-sorter-v1';
+const CACHE = 'message-sorter-v2';
 const ASSETS = [
   './',
   'index.html',
