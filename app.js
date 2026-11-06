@@ -20,6 +20,10 @@
     exportBtn: $('exportBtn'),
     collapseAll: $('collapseAll'),
     results: $('results'),
+    grandTotal: $('grandTotal'),
+    grandLabel: $('grandLabel'),
+    grandMeta: $('grandMeta'),
+    grandValue: $('grandValue'),
     resultNote: $('resultNote'),
     resultsPanel: $('resultsPanel'),
     staleNote: $('staleNote'),
@@ -218,13 +222,21 @@
       if (keys && r.groups.length === 0) kind = els.input.value.trim() ? 'none' : 'blank';
       els.results.innerHTML = emptyHTML(kind, query.trim());
       els.resultNote.textContent = '';
+      els.grandTotal.hidden = true;
     } else {
       var parts = new Array(list.length);
       for (var i = 0; i < list.length; i++) parts[i] = groupHTML(list[i]);
       els.results.innerHTML = parts.join('');
       els.resultNote.textContent = keys
         ? 'Showing ' + list.length + ' of ' + plural(r.groups.length, 'group')
-        : plural(list.length, 'group') + ' · grand total ' + fmtAmt(r.grandSum);
+        : plural(list.length, 'group') + ', ascending';
+
+      // Sum of every amount shown above, duplicates included.
+      var gt = S.sumGroups(list, false);
+      els.grandLabel.textContent = keys ? 'Total of shown groups' : 'Grand total';
+      els.grandMeta.textContent = plural(gt.groups, 'group') + ' · ' + plural(gt.messages, 'message');
+      els.grandValue.textContent = fmtAmt(gt.sum);
+      els.grandTotal.hidden = false;
     }
     updateCollapseLabel();
   }
