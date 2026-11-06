@@ -179,9 +179,26 @@
     return [head].concat(items.map(function (i) { return i.text; })).join('\n');
   }
 
+  // Sum of every amount across the given groups. Duplicates are included unless skipRepeats is set.
+  function sumGroups(groups, skipRepeats) {
+    var sum = 0, messages = 0;
+    for (var i = 0; i < groups.length; i++) {
+      var items = skipRepeats
+        ? groups[i].items.filter(function (it) { return it.first; })
+        : groups[i].items;
+      sum += totals(items).sum;
+      messages += items.length;
+    }
+    return { sum: round2(sum), messages: messages, groups: groups.length };
+  }
+
   function formatGroups(groups, skipRepeats) {
     if (!groups.length) return '';
-    return groups.map(function (g) { return formatGroup(g, skipRepeats); }).join('\n\n') + '\n';
+    var t = sumGroups(groups, skipRepeats);
+    var foot = 'Grand total (' + t.groups + (t.groups === 1 ? ' group, ' : ' groups, ') +
+      t.messages + (t.messages === 1 ? ' message): ' : ' messages): ') + t.sum;
+    return groups.map(function (g) { return formatGroup(g, skipRepeats); }).join('\n\n') +
+      '\n\n' + foot + '\n';
   }
 
   return {
@@ -190,6 +207,7 @@
     normalizeKey: normalizeKey,
     parseAmount: parseAmount,
     totals: totals,
+    sumGroups: sumGroups,
     compareKeys: compareKeys,
     formatGroup: formatGroup,
     formatGroups: formatGroups

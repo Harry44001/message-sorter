@@ -223,6 +223,18 @@ ul, ol { list-style: none; }
   background: #fdecb9; padding: 1px 8px; border-radius: 999px;
 }
 
+.grand-total {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin: 0 16px 16px; padding: 14px 16px;
+  background: var(--accent-soft); border: 1px solid #c9d7fb; border-radius: 10px;
+}
+.grand-label { font-size: 15px; font-weight: 650; }
+.grand-meta { font-size: 13px; color: var(--muted); }
+.grand-value {
+  font-size: 26px; font-weight: 700; line-height: 1.2; color: var(--accent);
+  font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere;
+}
+
 .empty { text-align: center; padding: 36px 16px; color: var(--muted); }
 .empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
 .empty .btn { margin-top: 16px; }
