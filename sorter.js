@@ -18,15 +18,40 @@
   // digits, optional spaces, the first dash (hyphen, en dash, em dash, minus), the rest.
   var ENTRY = /^(\d+)\s*[-\u2010-\u2015\u2212]\s*(.*)$/;
 
-  // Optional WhatsApp export prefix, e.g. "[10:15 am, 06/11/2026] Name: " or
-  // "06/11/2026, 10:15 - Name: ". Only removed when the option is on.
-  var DATE = '\\d{1,4}[\\/.\\-]\\d{1,2}[\\/.\\-]\\d{1,4}';
+  // Optional WhatsApp prefix, only removed when the option is on. Handles:
+  //   "[06/11, 13:21] john: "          (date with or without a year)
+  //   "[10:15 am, 06/11/2026] Name: "
+  //   "06/11/2026, 10:15 - Name: "
+  // The sender can be any text without a colon (names, numbers with +, symbols).
+  var DATE = '\\d{1,4}[\\/.\\-]\\d{1,2}(?:[\\/.\\-]\\d{1,4})?';
   var TIME = '\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:[ap]\\.?\\s?m\\.?)?';
+  var BRACKET = '\\[[^\\]\\n]*\\d{1,2}:\\d{2}[^\\]\\n]*\\]'; // any [ ... 13:21 ... ]
+  var PLAIN = '(?:' + DATE + ',?\\s*' + TIME + '|' + TIME + ',?\\s*' + DATE + ')';
   var PREFIX = new RegExp(
-    '^\\[?(?:' + DATE + ',?\\s*' + TIME + '|' + TIME + ',?\\s*' + DATE + ')\\]?' +
+    '^(?:' + BRACKET + '|' + PLAIN + ')' +
     '\\s*(?:[-\\u2010-\\u2015]\\s*)?(?!\\d)[^:\\n]{1,60}?:\\s*',
     'i'
   );
+
+  // Amount = first number after the dash ("250", "1,000", "250.50", "Rs 250", "250 rice").
+  var AMOUNT = /^\s*(?:rs\.?|inr|₹|\$)?\s*(\d[\d,]*(?:\.\d+)?)/i;
+  function parseAmount(rest) {
+    var m = AMOUNT.exec(rest);
+    if (!m) return null;
+    var v = parseFloat(m[1].replace(/,/g, ''));
+    return isFinite(v) ? v : null;
+  }
+  function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
+
+  // Sum of the amounts in a list of items; missing = items without a readable amount.
+  function totals(items) {
+    var sum = 0, missing = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].amount === null) missing++;
+      else sum += items[i].amount;
+    }
+    return { sum: round2(sum), missing: missing };
+  }
 
   // Keys are kept as digit strings so numbers of any length compare exactly.
   function normalizeKey(digits) {
@@ -73,6 +98,7 @@
       group.items.push({
         text: body,
         line: i + 1,
+        amount: parseAmount(m[2]),
         // Same group number + same text after the dash (spacing and case ignored)
         norm: key + '|' + m[2].replace(/\s+/g, ' ').trim().toLowerCase(),
         first: true,
@@ -110,11 +136,19 @@
     }
 
     var index = new Map();
-    groups.forEach(function (x) { index.set(x.key, x); });
+    var grand = 0;
+    groups.forEach(function (x) {
+      index.set(x.key, x);
+      var t = totals(x.items);
+      x.sum = t.sum;
+      x.missing = t.missing;
+      grand += t.sum;
+    });
 
     return {
       groups: groups,
       index: index,
+      grandSum: round2(grand),
       total: total,
       nonEmpty: nonEmpty,
       invalid: invalid,
@@ -140,7 +174,8 @@
       ? group.items.filter(function (i) { return i.first; })
       : group.items;
     var head = 'Group ' + group.key + ' (' + items.length +
-      (items.length === 1 ? ' message)' : ' messages)');
+      (items.length === 1 ? ' message)' : ' messages)') +
+      ', total ' + totals(items).sum;
     return [head].concat(items.map(function (i) { return i.text; })).join('\n');
   }
 
@@ -153,6 +188,8 @@
     process: process,
     parseKeyList: parseKeyList,
     normalizeKey: normalizeKey,
+    parseAmount: parseAmount,
+    totals: totals,
     compareKeys: compareKeys,
     formatGroup: formatGroup,
     formatGroups: formatGroups
