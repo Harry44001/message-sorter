@@ -57,6 +57,8 @@
   }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
   function fmt(n) { return n.toLocaleString(); }
+  // Amounts use Indian digit grouping (1,00,000) and at most 2 decimals.
+  function fmtAmt(n) { return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
 
   function debounce(fn, ms) {
     var t;
@@ -171,7 +173,11 @@
       '<button type="button" class="group-toggle" data-action="toggle" aria-expanded="' + (!collapsed) + '">' +
       '<span class="chev" aria-hidden="true"></span>' +
       '<span class="group-num">' + g.key + '</span>' +
-      '<span class="group-count">' + plural(n, 'message') + '</span>' +
+      '<span class="group-info">' +
+      '<span class="group-total"><span class="lbl">Total</span> ' + fmtAmt(g.sum) + '</span>' +
+      '<span class="group-count">' + plural(n, 'message') +
+      (g.missing ? ' &middot; ' + g.missing + ' without an amount' : '') + '</span>' +
+      '</span>' +
       '</button>' +
       '<button type="button" class="btn btn-sm" data-action="copy-group" data-key="' + g.key + '" aria-label="Copy group ' + g.key + '">Copy</button>' +
       '</div><ul class="msgs">';
@@ -218,7 +224,7 @@
       els.results.innerHTML = parts.join('');
       els.resultNote.textContent = keys
         ? 'Showing ' + list.length + ' of ' + plural(r.groups.length, 'group')
-        : plural(list.length, 'group') + ', ascending';
+        : plural(list.length, 'group') + ' · grand total ' + fmtAmt(r.grandSum);
     }
     updateCollapseLabel();
   }
