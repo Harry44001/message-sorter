@@ -202,7 +202,10 @@ ul, ol { list-style: none; }
   background: var(--accent-soft); padding: 3px 10px; border-radius: 6px;
   max-width: 55%; overflow-wrap: anywhere;
 }
-.group-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.group-info { display: flex; flex-direction: column; min-width: 0; padding: 4px 0; }
+.group-total { font-size: 17px; font-weight: 650; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.group-total .lbl { font-size: 12px; font-weight: 500; color: var(--muted); margin-right: 2px; }
+.group-count { font-size: 12.5px; line-height: 1.3; color: var(--muted); }
 .group-head .btn { flex: none; }
 
 .msgs { border-top: 1px solid var(--border); }
